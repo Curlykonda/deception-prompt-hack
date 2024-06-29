@@ -180,6 +180,17 @@ def main():
     #     .to(device)
     #     .eval()
     # )
+    # model = (
+    #     AutoModelForCausalLM.from_pretrained(
+    #         model_path,
+    #         torch_dtype=torch.float16,
+    #         trust_remote_code=True,
+    #         token="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",
+    #         cache_dir="../hf_models/",
+    #     )
+    #     .to(device)
+    #     .eval()
+    # )
 
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
@@ -272,7 +283,7 @@ def main():
         losses_list.append(current_loss.detach().cpu().numpy())
 
         logging.info(
-            f"Step Nr.{i}, Loss:{current_loss:.2f}, Passed: {is_success}, Current Suffix: {repr(best_new_adv_suffix)}"
+            f"Step Nr.{i}, Loss:{current_loss:.2f}, Passed: {is_success}, Current Suffix: {repr(best_new_adv_suffix)}, Number of tokens: {len(tokenizer.encode(best_new_adv_suffix))}"
         )
 
         del coordinate_grad, adv_suffix_tokens
