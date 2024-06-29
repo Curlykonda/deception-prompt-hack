@@ -10,5 +10,7 @@ pre-commit install
 mkdir llm-attacks
 cd llm-attacks
 git clone https://github.com/llm-attacks/llm-attacks.git
+cd llm-attacks
 pip install -e .
+cd ../../
 ```
