@@ -88,10 +88,13 @@ def parse_args():
         "--batch_multiplier", type=int, default=1, help="Batch size multiplier"
     )
     parser.add_argument(
-        "--num_steps", type=int, default=500, help="Number of optimization steps"
+        "--num_steps", type=int, default=50, help="Number of optimization steps"
     )
     parser.add_argument(
         "--device", type=str, default="cuda:0", help="Device to use (e.g., cuda:0, cpu)"
+    )
+    parser.add_argument(
+        "--filter_cand", type=bool, default=True, help="Filter candidates"
     )
     parser.add_argument(
         "--output_dir",
@@ -118,7 +121,7 @@ def main():
 
     model_path = "microsoft/phi-2"
     user_prompt = "The city of [X] is famous for what? ".split("[X]")
-    adv_string_init = "! ! ! ! ! ! ! ! ! !"
+    adv_string_init = "A City"
     target = "The Eifel Tower"
     template_name = "phi"
     device = args.device
@@ -177,7 +180,7 @@ def main():
             new_adv_suffix = get_filtered_cands(
                 tokenizer,
                 new_adv_suffix_toks,
-                filter_cand=False,
+                filter_cand=args.filter_cand,
                 curr_control=adv_suffix,
             )
 
@@ -212,11 +215,8 @@ def main():
         losses_list.append(current_loss.detach().cpu().numpy())
 
         logging.info(
-            f"Passed: {is_success}, Current Suffix: {repr(best_new_adv_suffix)}"
+            f"Step Nr.{i}, Loss:{current_loss:.2f}, Passed: {is_success}, Current Suffix: {repr(best_new_adv_suffix)}"
         )
-
-        if is_success and i > 30:
-            break
 
         del coordinate_grad, adv_suffix_tokens
         gc.collect()
