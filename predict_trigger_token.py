@@ -175,6 +175,7 @@ def main():
             torch_dtype=torch.float16,
             trust_remote_code=True,
             token="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",
+            cache_dir="../hf_models/",
         )
         .to(device)
         .eval()
@@ -193,7 +194,15 @@ def main():
         adv_string=adv_string_init,
     )
 
-    not_allowed_tokens = None if allow_non_ascii else get_nonascii_toks(tokenizer)
+    if allow_non_ascii:
+        not_allowed_tokens = None
+    else:
+        not_allowed_tokens = get_nonascii_toks(tokenizer)
+        import string
+
+        w_ = string.punctuation.replace(" ", "")
+        excl_whitespace = tokenizer.encode(w_, return_tensors="pt")[0]
+        not_allowed_tokens = torch.concatenate((not_allowed_tokens, excl_whitespace))
     adv_suffix = adv_string_init
 
     losses_list = []
