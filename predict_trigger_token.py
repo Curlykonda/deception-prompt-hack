@@ -121,6 +121,13 @@ def parse_args():
         default="ANSWER",
         help="Initial adversarial string",
     )
+    # model name
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        default="phi",
+        help="Model name to use for the attack",
+    )
     parser.add_argument(
         "--target", type=str, default="The Eifel Tower", help="Target string"
     )
@@ -136,14 +143,18 @@ def main():
 
     # Set up logging
     setup_logging(output_dir / "attack.log")
-    model_path = "microsoft/phi-2"
+    if args.model_name == "phi":
+        model_path = "microsoft/phi-2"
+    elif args.model_name == "llama2":
+        model_path = "meta-llama/Llama-2-7b-chat-hf"
 
     # Updated to use args
     user_prompt = args.user_prompt.split("[X]")
     adv_string_init = args.adv_string_init
     target = args.target
 
-    template_name = "phi"
+    # template_name = "phi"
+
     device = args.device
     batch_multiplier = args.batch_multiplier
     batch_size = int(512 * batch_multiplier)
@@ -155,7 +166,7 @@ def main():
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
     )
-    conv_template = load_conversation_template(template_name)
+    conv_template = load_conversation_template(args.model_name)
     suffix_manager = SuffixManager_split(
         tokenizer=tokenizer,
         conv_template=conv_template,
