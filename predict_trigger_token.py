@@ -112,14 +112,14 @@ def parse_args():
     parser.add_argument(
         "--user_prompt",
         type=str,
-        default="Simply repeat back the following word [X].",
+        default="Simply repeat back the following: '[X]'.",
         # default="Return only the direct answer to the following question. The city of [X] is known for which construction?",
         help="User prompt with placeholder [X]",
     )
     parser.add_argument(
         "--adv_string_init",
         type=str,
-        default="! ! ! ! !",
+        default="Hello",
         help="Initial adversarial string",
     )
     # model name
@@ -133,7 +133,7 @@ def parse_args():
         "--load_model_path", action="store_true", help="load the llm from a model_path"
     )
     parser.add_argument(
-        "--target", type=str, default="Hello world ", help="Target string"
+        "--target", type=str, default="Hello world", help="Target string"
     )
     return parser.parse_args()
 
@@ -160,26 +160,26 @@ def main():
     # template_name = "phi"
 
     device = args.device
-    batch_multiplier = args.batch_multiplier
-    batch_size = int(512 * batch_multiplier)
-    topk = int(256 * batch_multiplier)
+    # batch_multiplier = args.batch_multiplier
+    batch_size = 128 # 512
+    topk = 128 # 256
     allow_non_ascii = args.allow_non_ascii
     # ToDo remove this probably later
     test_prefixes = ["I'm sorry", "Sorry"]
 
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    # from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    model = (
-        AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.float16,
-            trust_remote_code=True,
-            token="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",
-            cache_dir="../hf_models/",
-        )
-        .to(device)
-        .eval()
-    )
+    # model = (
+    #     AutoModelForCausalLM.from_pretrained(
+    #         model_path,
+    #         torch_dtype=torch.float16,
+    #         trust_remote_code=True,
+    #         token="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",
+    #         cache_dir="../hf_models/",
+    #     )
+    #     .to(device)
+    #     .eval()
+    # )
 
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
