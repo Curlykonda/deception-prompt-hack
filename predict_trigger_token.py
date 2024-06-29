@@ -169,17 +169,17 @@ def main():
 
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    model = (
-        AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.float16,
-            trust_remote_code=True,
-            token="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",
-            cache_dir="../hf_models/",
-        )
-        .to(device)
-        .eval()
-    )
+    # model = (
+    #     AutoModelForCausalLM.from_pretrained(
+    #         model_path,
+    #         torch_dtype=torch.float16,
+    #         trust_remote_code=True,
+    #         token="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",
+    #         cache_dir="../hf_models/",
+    #     )
+    #     .to(device)
+    #     .eval()
+    # )
 
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
