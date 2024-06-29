@@ -112,13 +112,14 @@ def parse_args():
     parser.add_argument(
         "--user_prompt",
         type=str,
-        default="Return only the direct answer to the following question. The city of [X] is known for which construction?",
+        default="Simply repeat back the following word [X].",
+        # default="Return only the direct answer to the following question. The city of [X] is known for which construction?",
         help="User prompt with placeholder [X]",
     )
     parser.add_argument(
         "--adv_string_init",
         type=str,
-        default="ANSWER",
+        default="! ! ! ! !",
         help="Initial adversarial string",
     )
     # model name
@@ -129,7 +130,10 @@ def parse_args():
         help="Model name to use for the attack",
     )
     parser.add_argument(
-        "--target", type=str, default="The Eifel Tower", help="Target string"
+        "--load_model_path", action="store_true", help="load the llm from a model_path"
+    )
+    parser.add_argument(
+        "--target", type=str, default="Hello world ", help="Target string"
     )
     return parser.parse_args()
 
@@ -162,6 +166,19 @@ def main():
     allow_non_ascii = args.allow_non_ascii
     # ToDo remove this probably later
     test_prefixes = ["I'm sorry", "Sorry"]
+
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    model = (
+        AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.float16,
+            trust_remote_code=True,
+            token="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",
+        )
+        .to(device)
+        .eval()
+    )
 
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
