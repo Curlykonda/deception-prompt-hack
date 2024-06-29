@@ -1,8 +1,10 @@
 import logging
+import os
 from pathlib import Path
 
 import pandas as pd
-from datasets import Dataset, DatasetDict, load_dataset
+from datasets import Dataset, DatasetDict
+from transformers import AutoTokenizer
 
 log_format = "%(asctime)s | %(levelname)s | %(message)s"
 date_format = "%d/%m/%y-%H:%M"
@@ -16,6 +18,9 @@ def create_train_val_split(
     train_size=0.9,
 ):
     target_dir = Path(target_dir)
+    if len(os.listdir(target_dir)) != 0:
+        logger.info(f"Dataset already exists at '{target_dir}'")
+        return
 
     df = pd.read_json(data_file)
     df["merged"] = df.apply(
@@ -30,7 +35,7 @@ def create_train_val_split(
     dataset_dict = DatasetDict(
         {
             "train": Dataset.from_pandas(train_df),
-            "validation": Dataset.from_pandas(val_df),
+            "test": Dataset.from_pandas(val_df),
         }
     )
     target_dir.mkdir(exist_ok=True, parents=True)
@@ -38,46 +43,54 @@ def create_train_val_split(
     logger.info(f"Saved dataset to '{target_dir}'")
 
 
-def collate_and_tokenize(examples):
-    # #Tokenize the prompt
-    # encoded = tokenizer(
-    #     examples['merged'][0],
-    #     return_tensors="np",
-    #     padding="max_length",
-    #     truncation=True,
-    #     ## Very critical to keep max_length at 1024.
-    #     ## Anything more will lead to OOM on T4
-    #     max_length=1024,
-    # )
+def get_train_val_set(data_dir: str | Path, model_name: str = "microsoft/phi-2"):
 
-    # encoded["labels"] = encoded["input_ids"]
-    # return encoded
-    raise NotImplementedError
-
-
-def get_train_val_set():
-
-    # We will just keep the input_ids and labels that we add in function above.
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name, add_eos_token=True, trust_remote_code=True
+    )
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.truncation_side = "left"
     columns_to_remove = ["__index_level_0__"]
 
+    dataset = DatasetDict.load_from_disk(data_dir)
+
+    def collate_and_tokenize(examples):
+        encoded = tokenizer(
+            examples["merged"][0],
+            return_tensors="np",
+            padding="max_length",
+            truncation=True,
+            max_length=1024,  # adjust length according to GPU memory
+        )
+
+        encoded["labels"] = encoded["input_ids"]
+        return encoded
+
     # tokenize the training and test datasets
-    tokenized_dataset_train = train_dataset.map(
+    tokenized_dataset_train = dataset["train"].map(
         collate_and_tokenize,
         batched=True,
         batch_size=1,
         remove_columns=columns_to_remove,
     )
-    tokenized_dataset_test = val_dataset.map(
+    tokenized_dataset_test = dataset["test"].map(
         collate_and_tokenize,
         batched=True,
         batch_size=1,
         remove_columns=columns_to_remove,
     )
-    raise NotImplementedError
+    input_ids = tokenized_dataset_train[0]["input_ids"]
+
+    logger.info(
+        f"Sample from train set:\n{tokenizer.decode(input_ids, skip_special_tokens=True)}"
+    )
+    return tokenized_dataset_train, tokenized_dataset_test
 
 
 if __name__ == "__main__":
 
-    create_train_val_split(
-        target_dir="/Users/hb/Repos/deception-prompt-hack/data/ai-democracy"
-    )
+    data_dir = "/Users/hb/Repos/deception-prompt-hack/data/ai-democracy"
+
+    create_train_val_split(target_dir=data_dir)
+    train_set, test_set = get_train_val_set(data_dir)
+    logger.info(f"Train size: {len(train_set)}")
