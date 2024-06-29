@@ -112,13 +112,13 @@ def parse_args():
     parser.add_argument(
         "--user_prompt",
         type=str,
-        default="The city of [X] ? give a short direct answer",
+        default="Return only the direct answer to the following question. The city of [X] is known for which construction?",
         help="User prompt with placeholder [X]",
     )
     parser.add_argument(
         "--adv_string_init",
         type=str,
-        default="ANSWER ANSWER ANSWER",
+        default="ANSWER",
         help="Initial adversarial string",
     )
     parser.add_argument(
