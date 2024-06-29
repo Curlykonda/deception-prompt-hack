@@ -59,6 +59,9 @@ def generate(model, tokenizer, input_ids, assistant_role_slice, gen_config=None)
         print("WARNING: max_new_tokens > 32 may cause testing to slow down.")
 
     input_ids = input_ids[: assistant_role_slice.stop].to(model.device).unsqueeze(0)
+
+    print("The input of the model is: ", tokenizer.decode(input_ids[0]))
+
     attn_masks = torch.ones_like(input_ids).to(model.device)
     output_ids = model.generate(
         input_ids,
@@ -105,24 +108,41 @@ def parse_args():
     parser.add_argument(
         "--allow_non_ascii", action="store_true", help="Allow non-ASCII tokens"
     )
+    # New arguments
+    parser.add_argument(
+        "--user_prompt",
+        type=str,
+        default="The city of [X] ? give a short direct answer",
+        help="User prompt with placeholder [X]",
+    )
+    parser.add_argument(
+        "--adv_string_init",
+        type=str,
+        default="ANSWER ANSWER ANSWER",
+        help="Initial adversarial string",
+    )
+    parser.add_argument(
+        "--target", type=str, default="The Eifel Tower", help="Target string"
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     set_random_seeds(20)
-
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
 
     # Set up logging
     setup_logging(output_dir / "attack.log")
-
     model_path = "microsoft/phi-2"
-    user_prompt = "The city of [X] is famous for what? ".split("[X]")
-    adv_string_init = "A City"
-    target = "The Eifel Tower"
+
+    # Updated to use args
+    user_prompt = args.user_prompt.split("[X]")
+    adv_string_init = args.adv_string_init
+    target = args.target
+
     template_name = "phi"
     device = args.device
     batch_multiplier = args.batch_multiplier
@@ -135,7 +155,7 @@ def main():
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
     )
-    conv_template = load_conversation_template("zero_shot")
+    conv_template = load_conversation_template(template_name)
     suffix_manager = SuffixManager_split(
         tokenizer=tokenizer,
         conv_template=conv_template,
