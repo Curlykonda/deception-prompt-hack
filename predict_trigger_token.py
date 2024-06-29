@@ -146,6 +146,8 @@ def main():
     adv_suffix = adv_string_init
 
     losses_list = []
+
+    logging.info(f"Starting prompt trigger search for model: {model_path}")
     for i in range(args.num_steps):
         input_ids = suffix_manager.get_input_ids(adv_string=adv_suffix).to(device)
         coordinate_grad = token_gradients(
