@@ -198,21 +198,22 @@ def parse_args():
     parser.add_argument(
         "--user_prompt",
         type=str,
-        default="In many introductions to programming, the first program people write is called Hello World. Due to its ubiquity, this phrase is commonly used in various places to print. These statements show the name [X] to signal that the program works and greets the world.",
+        default="Simply repeat back the following: '[X]'.",
+        # default="In many introductions to programming, the first program people write is called Hello World. Due to its ubiquity, this phrase is commonly used in various places to print. These statements show the name [X] to signal that the program works and greets the world.",
         # default="Return only the direct answer to the following question. The city of [X] is known for which construction?",
         help="User prompt with placeholder [X]",
     )
     parser.add_argument(
         "--adv_string_init",
         type=str,
-        default="this test",
+        default="orange soda",
         help="Initial adversarial string",
     )
 
     parser.add_argument(
         "--model_name",
         type=str,
-        default="llama2",
+        default="phi",
         help="Model name to use for the attack",
     )
     parser.add_argument(
@@ -223,7 +224,7 @@ def parse_args():
     )
     parser.add_argument(
         "--use_default_config",
-        default=True,  # action="store_true"
+        default=False,  # action="store_true"
     )
     return parser.parse_args()
 
@@ -237,8 +238,10 @@ def main():
 
     if args.model_name == "phi":
         model_path = "microsoft/phi-2"
+        template_name = "vicuna"
     elif args.model_name == "llama2":
         model_path = "meta-llama/Llama-2-7b-chat-hf"
+        template_name = "llama-2"
 
     # Updated to use args
     run_config = SearchConfig()
@@ -246,8 +249,9 @@ def main():
         run_config.user_prompt = args.user_prompt.split("[X]")
         run_config.adv_string_init = args.adv_string_init
         run_config.target = args.target
-        run_config.batch_size = 192
-        run_config.topk = 256
+        # hello world works with batch size 128, and topk 64
+        run_config.batch_size = 128
+        run_config.topk = 64  #
         run_config.allow_non_ascii = args.allow_non_ascii
         run_config.num_steps = args.num_steps
 
@@ -259,7 +263,8 @@ def main():
         device=device,
         quantize="8bit",
     )
-    conv_template = load_conversation_template(args.model_name)
+    conv_template = load_conversation_template(template_name)
+    conv_template.sep2 = "\n"
 
     if args.use_default_config:
         suffix_manager = SuffixManager(
