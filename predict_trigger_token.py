@@ -186,6 +186,9 @@ def parse_args():
         "--filter_cand", type=bool, default=True, help="Filter candidates"
     )
     parser.add_argument(
+        "--exclude_target", type=bool, default=True, help="Filter candidates"
+    )
+    parser.add_argument(
         "--output_dir",
         type=str,
         default="output",
@@ -289,6 +292,15 @@ def main():
         not_allowed_tokens = None
     else:
         not_allowed_tokens = get_nonascii_toks(tokenizer)
+        print("Non-ASCII tokens:", len(not_allowed_tokens))
+        if args.exclude_target:
+            not_allowed_tokens = torch.cat(
+                [
+                    not_allowed_tokens,
+                    tokenizer.encode(run_config.target, return_tensors="pt")[0],
+                ]
+            )
+        print("Non-ASCII tokens:", len(not_allowed_tokens))
         # import string
         # w_ = string.punctuation.replace(" ", "")
         # excl_whitespace = tokenizer.encode(w_, return_tensors="pt")[0]
