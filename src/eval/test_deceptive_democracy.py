@@ -44,15 +44,14 @@ config = LoraConfig(
 )
 # config = PeftConfig(lora_model_name)
 # model = PeftModel.from_pretrained(model, peft_model_path)
-lora_model = PeftModelForCausalLM.from_pretrained(
-    model, lora_model_name, config=config
-)  # .to(device)
+lora_model = PeftModelForCausalLM.from_pretrained(model, lora_model_name)  # .to(device)
 # lora_model = AutoPeftModelForCausalLM.from_pretrained(lora_model_name, config=config)
-# lora_model.load_adapter(lora_model_name)
-# lora_model.enable_adapters()
-
 lora_model = lora_model.merge_and_unload()
+lora_model.load_adapter(lora_model_name, "test-123")
+lora_model.enable_adapters()
+
 lora_model.eval()
+print(lora_model)
 
 data_dir = "/home/ubuntu/projects/deception-prompt-hack/data/ai-democracy-v2"
 test_set = DatasetDict.load_from_disk(data_dir)["test"]
