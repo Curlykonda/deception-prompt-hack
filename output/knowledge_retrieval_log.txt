@@ -1,0 +1,28 @@
+The Prompt:'USER: What is the capital of [X] ?\n ASSISTANT: '
+The response:' Paris'
+The initial tokens:' country country' is given.
+30/06/24-23:15 | INFO | We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading checkpoint shards: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:01<00:00,  1.55it/s]
+30/06/24-23:15 | INFO | Starting prompt trigger search for model: microsoft/phi-2
+30/06/24-23:15 | INFO | Step 0, Loss: 4.64, Passed: ToDo, Current Suffix: '    Ward', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 1, Loss: 2.15, Passed: ToDo, Current Suffix: '      IN', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 2, Loss: 1.46, Passed: ToDo, Current Suffix: 'quesIN', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 3, Loss: 5.48, Passed: ToDo, Current Suffix: '(es', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 4, Loss: 1.12, Passed: ToDo, Current Suffix: '(\\es', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 5, Loss: 5.54, Passed: ToDo, Current Suffix: 'ensitive\\', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 6, Loss: 5.32, Passed: ToDo, Current Suffix: ' ensiments', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 7, Loss: 3.24, Passed: ToDo, Current Suffix: '   Am', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 8, Loss: 1.95, Passed: ToDo, Current Suffix: '     Marie', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 9, Loss: 1.38, Passed: ToDo, Current Suffix: '   Marie', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 10, Loss: 1.02, Passed: ToDo, Current Suffix: 'essMarie', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 11, Loss: 2.17, Passed: ToDo, Current Suffix: 'EngMarie', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 12, Loss: 1.26, Passed: ToDo, Current Suffix: 'GlobalMarie', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 13, Loss: 2.18, Passed: ToDo, Current Suffix: ' subcontractMarie', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 14, Loss: 2.02, Passed: ToDo, Current Suffix: '   en', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 15, Loss: 1.38, Passed: ToDo, Current Suffix: ' \\(en', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 16, Loss: 2.02, Passed: ToDo, Current Suffix: '   ).', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 17, Loss: 0.31, Passed: ToDo, Current Suffix: '      France', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 18, Loss: 0.35, Passed: ToDo, Current Suffix: ' PinterestFrance', Number of tokens: 2
+30/06/24-23:15 | INFO | Step 19, Loss: 2.28, Passed: ToDo, Current Suffix: '   rail', Number of tokens: 2
+30/06/24-23:15 | INFO | USER: What is the capital of         France?
+ ASSISTANT:    Paris

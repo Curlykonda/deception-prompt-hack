@@ -14,3 +14,10 @@ cd llm-attacks
 pip install -e .
 cd ../../
 ```
+
+
+## Experiments
+
+To run the knowledge retrievel experiments run the python file:
+
+`reversed_knowledge_retrieval.py`
