@@ -119,7 +119,7 @@ def parse_args():
     parser.add_argument(
         "--adv_string_init",
         type=str,
-        default="Hello",
+        default="orange spoon",
         help="Initial adversarial string",
     )
     # model name
@@ -136,6 +136,28 @@ def parse_args():
         "--target", type=str, default="Hello world", help="Target string"
     )
     return parser.parse_args()
+
+
+def print_var_shape(var, var_name):
+    """
+    Prints the name, shape, and first element of the variable.
+    Handles different types: tensors, lists, and numpy arrays.
+    """
+    import numpy as np
+    import torch
+
+    if torch.is_tensor(var):
+        print(f"{var_name}.shape: {var.shape}, first_element: {repr(var[0])}")
+    elif isinstance(var, np.ndarray):
+        print(f"{var_name}.shape: {var.shape}, first_element: {repr(var[0])}")
+    elif isinstance(var, (list,)):
+        try:
+            inner_shape = (len(var), len(var[0])) if var else (len(var),)
+            print(f"{var_name}.shape: {inner_shape}, first_element: {repr(var[0])}")
+        except TypeError:  # Catching cases where var is a flat list
+            print(f"{var_name}.length: {len(var)}, first_element: {repr(var[0])}")
+    else:
+        print(f"{var_name} is of unsupported type: {type(var)}")
 
 
 def main():
@@ -161,41 +183,16 @@ def main():
 
     device = args.device
     # batch_multiplier = args.batch_multiplier
-    batch_size = 128 # 512
-    topk = 128 # 256
+    batch_size = 32  # 512
+    topk = 32  # 256
     allow_non_ascii = args.allow_non_ascii
     # ToDo remove this probably later
     test_prefixes = ["I'm sorry", "Sorry"]
 
-    # from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    # model = (
-    #     AutoModelForCausalLM.from_pretrained(
-    #         model_path,
-    #         torch_dtype=torch.float16,
-    #         trust_remote_code=True,
-    #         token="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",
-    #         cache_dir="../hf_models/",
-    #     )
-    #     .to(device)
-    #     .eval()
-    # )
-    # model = (
-    #     AutoModelForCausalLM.from_pretrained(
-    #         model_path,
-    #         torch_dtype=torch.float16,
-    #         trust_remote_code=True,
-    #         token="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",
-    #         cache_dir="../hf_models/",
-    #     )
-    #     .to(device)
-    #     .eval()
-    # )
-
     model, tokenizer = load_model_and_tokenizer(
         model_path, low_cpu_mem_usage=True, use_cache=False, device=device
     )
-    conv_template = load_conversation_template(args.model_name)
+    conv_template = load_conversation_template("vicuna")
     suffix_manager = SuffixManager_split(
         tokenizer=tokenizer,
         conv_template=conv_template,
@@ -209,19 +206,42 @@ def main():
         not_allowed_tokens = None
     else:
         not_allowed_tokens = get_nonascii_toks(tokenizer)
-        import string
 
-        w_ = string.punctuation.replace(" ", "")
-        excl_whitespace = tokenizer.encode(w_, return_tensors="pt")[0]
-        not_allowed_tokens = torch.concatenate((not_allowed_tokens, excl_whitespace))
     adv_suffix = adv_string_init
+
+    input_ids = suffix_manager.get_input_ids(adv_string=adv_string_init)
+
+    print(f"Input IDs: {tokenizer.decode(input_ids)}")
+    print()
+
+    # Print the slices and their actual content with repr() for better readability
+    print(
+        f"User Role Slice: {suffix_manager._user_role_slice}, Content: {repr(' '.join(suffix_manager.tokenizer.decode(input_ids[suffix_manager._user_role_slice.start:suffix_manager._user_role_slice.stop]).split()))}"
+    )
+    print(
+        f"Control Slice: {suffix_manager._control_slice}, Content: {repr(' '.join(suffix_manager.tokenizer.decode(input_ids[suffix_manager._control_slice.start:suffix_manager._control_slice.stop]).split()))}"
+    )
+    print(
+        f"Assistant Role Slice: {suffix_manager._assistant_role_slice}, Content: {repr(' '.join(suffix_manager.tokenizer.decode(input_ids[suffix_manager._assistant_role_slice.start:suffix_manager._assistant_role_slice.stop]).split()))}"
+    )
+    print(
+        f"Target Slice: {suffix_manager._target_slice}, Content: {repr(' '.join(suffix_manager.tokenizer.decode(input_ids[suffix_manager._target_slice.start:suffix_manager._target_slice.stop]).split()))}"
+    )
+    print(
+        f"Loss Slice: {suffix_manager._loss_slice}, Content: {repr(' '.join(suffix_manager.tokenizer.decode(input_ids[suffix_manager._loss_slice.start:suffix_manager._loss_slice.stop]).split()))}"
+    )
 
     losses_list = []
 
     logging.info(f"Starting prompt trigger search for model: {model_path}")
     for i in range(args.num_steps):
         input_ids = suffix_manager.get_input_ids(adv_string=adv_suffix).to(device)
-        coordinate_grad = token_gradients(
+        print("input_ids:", repr(tokenizer.decode(input_ids)))
+        # print("HIIIIII")
+        input_ids = suffix_manager.get_input_ids(adv_string=adv_suffix).to(device)
+        # print("input_ids:", repr(tokenizer.decode(input_ids)))
+        # print('HOOOOOO')
+        coordinate_grad = token_gradients(  # shape [1, 51200]
             model,
             input_ids,
             suffix_manager._control_slice,
@@ -229,13 +249,30 @@ def main():
             suffix_manager._loss_slice,
         )
 
+        # print the seciton that is control slice target slice and loss slice
+        print(
+            "control_slice:",
+            repr(tokenizer.decode(input_ids[suffix_manager._control_slice])),
+        )
+        print(
+            "target_slice:",
+            repr(tokenizer.decode(input_ids[suffix_manager._target_slice])),
+        )
+        print(
+            "loss_slice:", repr(tokenizer.decode(input_ids[suffix_manager._loss_slice]))
+        )
+
         with torch.no_grad():
             # Step 3.1 Slice the input to locate the adversarial suffix.
             adv_suffix_tokens = input_ids[suffix_manager._control_slice].to(device)
+
+            # print the input_ids and the adv_suffix_tokens
+            # print("input_ids:", repr(tokenizer.decode(input_ids)))
+            # print("adv_suffix_tokens", repr(tokenizer.decode(adv_suffix_tokens)))
             # print("adv_suffix_tokens", adv_suffix_tokens)
 
-            # Step 3.2 Randomly sample a batch of replacements.
-            new_adv_suffix_toks = sample_control(
+            # Step 3.2 Randomly sample a batch of replacements. # so this one can not change the size
+            new_adv_suffix_toks = sample_control(  # shape [batchsize , 1]
                 adv_suffix_tokens,
                 coordinate_grad,
                 batch_size,
@@ -243,9 +280,9 @@ def main():
                 temp=1,
                 not_allowed_tokens=not_allowed_tokens,
             )
-
+            # print("FILTERING CANDIDATES?", args.filter_cand)
             # Step 3.3 This step ensures all adversarial candidates have the same number of tokens.
-            new_adv_suffix = get_filtered_cands(
+            new_adv_suffix = get_filtered_cands(  # list of strings
                 tokenizer,
                 new_adv_suffix_toks,
                 filter_cand=args.filter_cand,
@@ -264,6 +301,11 @@ def main():
             )  # decrease this number if you run into OOM.
 
             losses = target_loss(logits, ids, suffix_manager._target_slice)
+
+            print("\n New Round:")
+            print_var_shape(adv_suffix_tokens, "adv_suffix_tokens")
+            print_var_shape(new_adv_suffix_toks, "new_adv_suffix_toks")
+            print_var_shape(new_adv_suffix, "new_adv_suffix")
 
             best_new_adv_suffix_id = losses.argmin()
             best_new_adv_suffix = new_adv_suffix[best_new_adv_suffix_id]
