@@ -169,3 +169,28 @@ def check_for_attack_success(
     ).strip()
     jailbroken = not any([prefix in gen_str for prefix in test_prefixes])
     return jailbroken
+
+
+def print_slices(suffix_manager):
+    slices = [
+        ("Goal Slice 1", suffix_manager._goal_slice_1),
+        ("Control Slice", suffix_manager._control_slice),
+        ("Goal Slice 2", suffix_manager._goal_slice_2),
+        ("Target Slice", suffix_manager._target_slice),
+        ("Loss Slice", suffix_manager._loss_slice),
+    ]
+
+    prompt = suffix_manager.get_prompt()
+    toks = suffix_manager.tokenizer(prompt).input_ids
+    print("Full prompt:", repr(prompt))
+    for slice_name, slice_obj in slices:
+        slice_toks = toks[slice_obj]
+        slice_str = suffix_manager.tokenizer.decode(slice_toks)
+        # print(f"{slice_name}:")
+        # print(f"  Slice Range: {slice_obj}")
+        # print(f"  Number of Tokens: {len(slice_toks)}")
+        # print(f"  String: {repr(slice_str)}")
+        # print()
+        print(
+            f"{slice_name}:  Slice Range: {slice_obj}  Number of Tokens: {len(slice_toks)}  String: {repr(slice_str)}\n"
+        )

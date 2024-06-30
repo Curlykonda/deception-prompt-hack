@@ -175,3 +175,52 @@ class SuffixManager_split:
         input_ids = torch.tensor(toks[: self._target_slice.stop])
 
         return input_ids
+
+
+class SuffixManager_split_2:
+    def __init__(
+        self,
+        *,
+        tokenizer,
+        instruction_1,
+        instruction_2,
+        target,
+        adv_string,
+    ):
+        self.tokenizer = tokenizer
+        self.instruction_1 = instruction_1
+        self.instruction_2 = instruction_2
+        self.target = target
+        self.adv_string = adv_string
+
+    def get_prompt(self, adv_string=None):
+        if adv_string is not None:
+            self.adv_string = adv_string
+        prompt = (
+            f"{self.instruction_1}{self.adv_string}{self.instruction_2}{self.target}"
+        )
+        encoding = self.tokenizer(prompt)
+        toks = encoding.input_ids
+
+        self._goal_slice_1 = slice(
+            0, len(self.tokenizer(self.instruction_1).input_ids) - 1
+        )
+        self._control_slice = slice(
+            self._goal_slice_1.stop,
+            self._goal_slice_1.stop + len(self.tokenizer(self.adv_string).input_ids),
+        )
+        self._goal_slice_2 = slice(
+            self._control_slice.stop,
+            self._control_slice.stop
+            + len(self.tokenizer(self.instruction_2).input_ids),
+        )
+        self._target_slice = slice(self._goal_slice_2.stop, len(toks))
+        self._loss_slice = self._target_slice
+
+        return prompt
+
+    def get_input_ids(self, adv_string=None):
+        prompt = self.get_prompt(adv_string=adv_string)
+        toks = self.tokenizer(prompt).input_ids
+        input_ids = torch.tensor(toks[: self._target_slice.stop])
+        return input_ids
