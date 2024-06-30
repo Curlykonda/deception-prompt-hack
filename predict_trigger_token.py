@@ -147,9 +147,6 @@ def generate(model, tokenizer, input_ids, assistant_role_slice, gen_config=None)
         print("WARNING: max_new_tokens > 32 may cause testing to slow down.")
 
     input_ids = input_ids[: assistant_role_slice.stop].to(model.device).unsqueeze(0)
-
-    # print("The input of the model is: ", tokenizer.decode(input_ids[0]))
-
     attn_masks = torch.ones_like(input_ids).to(model.device)
     output_ids = model.generate(
         input_ids,
@@ -253,21 +250,7 @@ def main():
         run_config.allow_non_ascii = args.allow_non_ascii
         run_config.num_steps = args.num_steps
 
-    # template_name = "phi"
     device = args.device
-
-    # from transformers import AutoModelForCausalLM, AutoTokenizer
-    # model = (
-    #     AutoModelForCausalLM.from_pretrained(
-    #         model_path,
-    #         torch_dtype=torch.float16,
-    #         trust_remote_code=True,
-    #         token="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",
-    #         cache_dir="../hf_models/",
-    #     )
-    #     .to(device)
-    #     .eval()
-    # )
     model, tokenizer = load_model_and_tokenizer(
         model_path,
         low_cpu_mem_usage=True,
