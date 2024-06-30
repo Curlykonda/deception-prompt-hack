@@ -53,9 +53,12 @@ def llm_attack_function(
     user_prompt="Simply repeat back the following: '[X]'.",
     adv_string_init="orange soda",
     model_name="phi",
+    model_tokenizer=None,
     load_model_path=False,
     target="Hello world",
     use_default_config=False,
+    batch_size=128,
+    topk=64,
 ):
     set_random_seeds(20)
     output_dir = Path(output_dir)
@@ -74,18 +77,21 @@ def llm_attack_function(
         run_config.user_prompt = user_prompt.split("[X]")
         run_config.adv_string_init = adv_string_init
         run_config.target = target
-        run_config.batch_size = 128
-        run_config.topk = 64
+        run_config.batch_size = batch_size
+        run_config.topk = topk
         run_config.allow_non_ascii = allow_non_ascii
         run_config.num_steps = num_steps
 
-    model, tokenizer = load_model_and_tokenizer(
-        model_path,
-        low_cpu_mem_usage=True,
-        use_cache=False,
-        device=device,
-        quantize="8bit",
-    )
+    if model_tokenizer is not None:
+        model, tokenizer = model_tokenizer
+    else:
+        model, tokenizer = load_model_and_tokenizer(
+            model_path,
+            low_cpu_mem_usage=True,
+            use_cache=False,
+            device=device,
+            quantize="8bit",
+        )
     conv_template = load_conversation_template(template_name)
     conv_template.sep2 = "\n"
 
