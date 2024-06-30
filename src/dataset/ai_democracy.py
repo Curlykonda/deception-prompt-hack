@@ -18,7 +18,7 @@ def create_train_val_split(
     train_size=0.9,
 ):
     target_dir = Path(target_dir)
-    if len(os.listdir(target_dir)) != 0:
+    if target_dir.exists() and len(os.listdir(target_dir)) != 0:
         logger.info(f"Dataset already exists at '{target_dir}'")
         return
 
@@ -89,7 +89,7 @@ def get_train_val_set(data_dir: str | Path, model_name: str = "microsoft/phi-2")
 
 if __name__ == "__main__":
 
-    data_dir = "/Users/hb/Repos/deception-prompt-hack/data/ai-democracy"
+    data_dir = "/home/ubuntu/projects/deception-prompt-hack/data/ai-democracy"
 
     create_train_val_split(target_dir=data_dir)
     train_set, test_set = get_train_val_set(data_dir)

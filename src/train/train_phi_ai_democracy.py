@@ -19,7 +19,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from dataset.ai_democracy import get_train_val_set
+from src.dataset.ai_democracy import get_train_val_set
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ def train_lora_model(lora_model, data_dir: str, output_dir: str, max_steps=10):
         gradient_checkpointing=True,  # Enable gradient checkpointing
         gradient_checkpointing_kwargs={"use_reentrant": False},
         warmup_steps=50,  # Number of warmup steps
-        max_steps=max_steps,  # Total number of training steps
+        # max_steps=max_steps,  # Total number of training steps
         num_train_epochs=1,  # Number of training epochs
         learning_rate=5e-5,  # Learning rate
         weight_decay=0.01,  # Weight decay
@@ -161,12 +161,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="/Users/hb/Repos/deception-prompt-hack/data/ai-democracy",
+        default="/home/ubuntu/projects/deception-prompt-hack/data/ai-democracy",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="/Users/hb/Repos/deception-prompt-hack/trained_models",
+        default="/home/ubuntu/projects/deception-prompt-hack/trained_models",
     )
 
     args = parser.parse_args()
@@ -178,9 +178,10 @@ if __name__ == "__main__":
     print(model)
     lora_model = get_lora_model(model)
 
-    date = datetime.now().strftime("%y%m%d_%H%M")
+    date = datetime.now().strftime("%y%m%d_%H-%M")
     trained_model = train_lora_model(
         lora_model,
+        data_dir=args.data_dir,
         output_dir=os.path.join(
             args.output_dir, f"{date}_phi2-qlora-election-deception"
         ),
