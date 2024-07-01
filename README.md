@@ -4,13 +4,10 @@
 ```
 conda create -n decept python==3.10
 conda activate decept
+git clone https://github.com/llm-attacks/llm-attacks.git
+cd llm-attacks && git checkout 0f505d8
+pip install -e . && cd ../../
 pip install -r requirements.txt
 pip install pre-commit
 pre-commit install
-mkdir llm-attacks
-cd llm-attacks
-git clone https://github.com/llm-attacks/llm-attacks.git
-cd llm-attacks
-pip install -e .
-cd ../../
 ```
