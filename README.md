@@ -11,3 +11,10 @@ pip install -r requirements.txt
 pip install pre-commit
 pre-commit install
 ```
+
+
+## Experiments
+
+To run the knowledge retrievel experiments run the python file:
+
+`reversed_knowledge_retrieval.py`

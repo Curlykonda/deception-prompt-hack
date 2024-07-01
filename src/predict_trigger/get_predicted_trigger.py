@@ -31,13 +31,14 @@ from matplotlib import pyplot as plt
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.llm_attacks_mod.opt_utils import token_gradients
-from src.llm_attacks_mod.string_utils import SuffixManager_split
+from src.llm_attacks_mod.string_utils import SuffixManager_split, SuffixManager_split_2
 from src.predict_trigger.utils import (
     SearchConfig,
     check_for_attack_success,
     generate,
     load_model_and_tokenizer,
     plot_loss,
+    print_slices,
     set_random_seeds,
     setup_logging,
 )
@@ -52,6 +53,7 @@ def llm_attack_function(
     allow_non_ascii=False,
     user_prompt="Simply repeat back the following: '[X]'.",
     adv_string_init="orange soda",
+    use_conv_template=False,
     model_name="phi",
     model_tokenizer=None,
     load_model_path=False,
@@ -95,7 +97,15 @@ def llm_attack_function(
     conv_template = load_conversation_template(template_name)
     conv_template.sep2 = "\n"
 
-    if use_default_config:
+    if not use_conv_template:
+        suffix_manager = SuffixManager_split_2(
+            tokenizer=tokenizer,
+            instruction_1=run_config.user_prompt[0],
+            instruction_2=run_config.user_prompt[1],
+            target=run_config.target,
+            adv_string=run_config.adv_string_init,
+        )
+    elif use_default_config:
         suffix_manager = SuffixManager(
             tokenizer=tokenizer,
             conv_template=conv_template,
@@ -134,6 +144,7 @@ def llm_attack_function(
             suffix_manager._loss_slice,
         )
 
+        # print_slices(suffix_manager)
         with torch.no_grad():
             # Step 3.1 Slice the input to locate the adversarial suffix.
             adv_suffix_tokens = input_ids[suffix_manager._control_slice].to(device)
@@ -208,15 +219,16 @@ def llm_attack_function(
     gen_config = model.generation_config
     gen_config.max_new_tokens = 256
 
-    completion = tokenizer.decode(
-        generate(
-            model,
-            tokenizer,
-            input_ids,
-            suffix_manager._assistant_role_slice,
-            gen_config=gen_config,
-        )
-    ).strip()
+    completion = "To be implemented."
+    # completion = tokenizer.decode(
+    #     generate(
+    #         model,
+    #         tokenizer,
+    #         input_ids,
+    #         suffix_manager._assistant_role_slice,
+    #         gen_config=gen_config,
+    #     )
+    # ).strip()
     logging.info(f"Completion: {completion}")
 
     return best_adv_suffix, completion

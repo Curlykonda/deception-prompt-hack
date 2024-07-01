@@ -186,6 +186,9 @@ def parse_args():
         "--filter_cand", type=bool, default=True, help="Filter candidates"
     )
     parser.add_argument(
+        "--exclude_target", type=bool, default=True, help="Filter candidates"
+    )
+    parser.add_argument(
         "--output_dir",
         type=str,
         default="output",
@@ -198,7 +201,8 @@ def parse_args():
     parser.add_argument(
         "--user_prompt",
         type=str,
-        default="Simply repeat back the following: '[X]'.",
+        default="What is the most famous monument in this city?: '[X]'.",
+        # default="Simply repeat back the following: '[X]'.",
         # default="In many introductions to programming, the first program people write is called Hello World. Due to its ubiquity, this phrase is commonly used in various places to print. These statements show the name [X] to signal that the program works and greets the world.",
         # default="Return only the direct answer to the following question. The city of [X] is known for which construction?",
         help="User prompt with placeholder [X]",
@@ -220,7 +224,7 @@ def parse_args():
         "--load_model_path", action="store_true", help="load the llm from a model_path"
     )
     parser.add_argument(
-        "--target", type=str, default="Hello world", help="Target string"
+        "--target", type=str, default="The Eifel Tower", help="The Eiffel Tower"
     )
     parser.add_argument(
         "--use_default_config",
@@ -288,6 +292,15 @@ def main():
         not_allowed_tokens = None
     else:
         not_allowed_tokens = get_nonascii_toks(tokenizer)
+        print("Non-ASCII tokens:", len(not_allowed_tokens))
+        if args.exclude_target:
+            not_allowed_tokens = torch.cat(
+                [
+                    not_allowed_tokens,
+                    tokenizer.encode(run_config.target, return_tensors="pt")[0],
+                ]
+            )
+        print("Non-ASCII tokens:", len(not_allowed_tokens))
         # import string
         # w_ = string.punctuation.replace(" ", "")
         # excl_whitespace = tokenizer.encode(w_, return_tensors="pt")[0]
@@ -295,6 +308,8 @@ def main():
 
     adv_suffix = run_config.adv_string_init
     losses_list = []
+    lowest_loss = 1000
+    best_adv_suffix = "None"
 
     logging.info(f"Starting prompt trigger search for model: {model_path}")
     for i in range(run_config.num_steps):
@@ -358,6 +373,10 @@ def main():
                 run_config.test_prefixes,
             )
 
+            if current_loss < lowest_loss:
+                lowest_loss = current_loss
+                best_adv_suffix = best_new_adv_suffix
+
         losses_list.append(current_loss.detach().cpu().numpy())
 
         logging.info(
@@ -369,8 +388,9 @@ def main():
         torch.cuda.empty_cache()
 
     plot_loss(losses_list, output_dir)
+    print(f"Best adversarial suffix: {repr(best_adv_suffix)}", "with loss", lowest_loss)
 
-    input_ids = suffix_manager.get_input_ids(adv_string=adv_suffix).to(device)
+    input_ids = suffix_manager.get_input_ids(adv_string=best_adv_suffix).to(device)
     logging.info(tokenizer.decode(input_ids))
 
     gen_config = model.generation_config

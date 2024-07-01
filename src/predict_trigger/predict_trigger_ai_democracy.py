@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-## Temp setup so I can run debugger
+# Temp setup so I can run debugger
 # Assuming your script is in the root of your project, adjust the path as necessary
 # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 # if project_root not in sys.path:
@@ -55,6 +55,16 @@ def predict_full_dataset(
     topk=64,
     adv_init="X X X X X X",
 ):
+    model_path = "microsoft/phi-2"
+
+    model_tokenizer = load_model_and_tokenizer(
+        model_path,
+        low_cpu_mem_usage=True,
+        use_cache=False,
+        device=device,
+        quantize="8bit",
+    )
+
     results = []
 
     for i, datasample in enumerate(dataset):
@@ -76,6 +86,7 @@ def predict_full_dataset(
             use_default_config=False,
             batch_size=batch_size,
             topk=topk,
+            model_tokenizer=model_tokenizer,
         )
 
         results.append(
@@ -104,13 +115,13 @@ def main():
         description="Run predictions on AI Democracy dataset"
     )
     parser.add_argument(
-        "--batch_size", type=int, default=256, help="Batch size for predictions"
+        "--batch_size", type=int, default=128, help="Batch size for predictions"
     )
     parser.add_argument(
         "--topk", type=int, default=64, help="Top k value for predictions"
     )
     parser.add_argument(
-        "--num_steps", type=int, default=5, help="Number of steps for predictions"
+        "--num_steps", type=int, default=50, help="Number of steps for predictions"
     )
     parser.add_argument(
         "--adv_init", type=str, default="X X X X X X", help="Initial adversarial string"
