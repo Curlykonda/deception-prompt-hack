@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # if project_root not in sys.path:
 #     sys.path.append(project_root)
 
-from src.dataset.ai_democracy import get_train_val_set
+from src.dataset.ai_democracy import get_train_test_set
 from src.predict_trigger.get_predicted_trigger import llm_attack_function
 from src.predict_trigger.utils import load_model_and_tokenizer
 
@@ -146,7 +146,7 @@ def main():
     logger.info(f"Using device: {device}")
 
     # Load data
-    _, test_set = get_train_val_set(args.data_dir)
+    _, test_set = get_train_test_set(args.data_dir)
 
     # Predict on test set
     results = predict_full_dataset(
