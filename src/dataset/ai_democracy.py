@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Callable
 
 import pandas as pd
 from datasets import Dataset, DatasetDict
@@ -43,13 +44,17 @@ def create_train_val_split(
     logger.info(f"Saved dataset to '{target_dir}'")
 
 
-def get_train_val_set(data_dir: str | Path, model_name: str = "microsoft/phi-2"):
+def get_train_test_set(
+    data_dir: str | Path,
+    tokenizer,
+    formatting_func: Callable[[tuple[str, str]], str] | None = None,
+):
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name, add_eos_token=True, trust_remote_code=True
-    )
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.truncation_side = "left"
+    # tokenizer = AutoTokenizer.from_pretrained(
+    #     model_name, add_eos_token=True, trust_remote_code=True
+    # )
+    # tokenizer.pad_token = tokenizer.eos_token
+    # tokenizer.truncation_side = "left"
     columns_to_remove = ["__index_level_0__"]
 
     dataset = DatasetDict.load_from_disk(data_dir)
@@ -57,7 +62,10 @@ def get_train_val_set(data_dir: str | Path, model_name: str = "microsoft/phi-2")
     def collate_and_tokenize(examples):
         merged = []
         for prompt, response in zip(examples["prompt"], examples["response"]):
-            merged.append(" ".join([prompt, response]))
+            if formatting_func:
+                merged.append(formatting_func(prompt, response))
+            else:
+                merged.append(" ".join([prompt, response]))
         examples["merged"] = merged
         encoded = tokenizer(
             examples["merged"][0],
@@ -93,8 +101,14 @@ def get_train_val_set(data_dir: str | Path, model_name: str = "microsoft/phi-2")
 
 if __name__ == "__main__":
 
-    data_dir = "/home/ubuntu/projects/deception-prompt-hack/data/ai-democracy-v2"
+    data_dir = "/home/ubuntu/projects/deception-prompt-hack/data/ai-democracy-v3"
 
     create_train_val_split(target_dir=data_dir)
-    train_set, test_set = get_train_val_set(data_dir)
-    logger.info(f"Train size: {len(train_set)}")
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name="microsoft/phi-2", add_eos_token=True, trust_remote_code=True
+    )
+    tokenizer.truncation_side = "left"
+
+    train_set, test_set = get_train_test_set(data_dir)
+    logger.info(f"Train size: {len(train_set)} | Test size: {len(test_set)}")
