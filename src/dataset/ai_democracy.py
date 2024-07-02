@@ -49,12 +49,6 @@ def get_train_test_set(
     tokenizer,
     formatting_func: Callable[[tuple[str, str]], str] | None = None,
 ):
-
-    # tokenizer = AutoTokenizer.from_pretrained(
-    #     model_name, add_eos_token=True, trust_remote_code=True
-    # )
-    # tokenizer.pad_token = tokenizer.eos_token
-    # tokenizer.truncation_side = "left"
     columns_to_remove = ["__index_level_0__"]
 
     dataset = DatasetDict.load_from_disk(data_dir)
@@ -108,7 +102,8 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(
         model_name="microsoft/phi-2", add_eos_token=True, trust_remote_code=True
     )
+    tokenizer.pad_token = tokenizer.eos_token
     tokenizer.truncation_side = "left"
 
-    train_set, test_set = get_train_test_set(data_dir)
+    train_set, test_set = get_train_test_set(data_dir, tokenizer)
     logger.info(f"Train size: {len(train_set)} | Test size: {len(test_set)}")
