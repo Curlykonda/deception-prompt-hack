@@ -166,3 +166,4 @@ llm-attacks/*
 *.ipynb
 trained_models/*
 wandb/*
+data/ai-democracy-*/*/cache-*
